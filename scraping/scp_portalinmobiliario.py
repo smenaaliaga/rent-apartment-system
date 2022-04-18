@@ -4,6 +4,7 @@ from scrapy.loader.processors import MapCompose
 from scrapy.loader import ItemLoader
 from scrapy.linkextractors import LinkExtractor
 from scrapy.crawler import CrawlerProcess
+from datetime import datetime
 
 class Depto(Item) :
     titulo = Field()
@@ -25,25 +26,20 @@ class PortainmobiliarioSpider(CrawlSpider) :
     # Configuraciones
     custom_settings = {
         'USER_AGENT': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/71.0.3578.80 Chrome/71.0.3578.80 Safari/537.36',
-        'CLOSESPIDER_PAGECOUNT' : 2001,
+        # 'CLOSESPIDER_PAGECOUNT' : 2001,
         'FEED_EXPORT_ENCODING' : 'utf-8'
     }
     # URls Semillas
-    start_urls = [
-        "https://www.portalinmobiliario.com/arriendo/departamento/santiago-metropolitana",  # Santiago Centro
-        "https://www.portalinmobiliario.com/arriendo/departamento/providencia-metropolitana"# Providencia
-        "https://www.portalinmobiliario.com/arriendo/departamento/penalolen-metropolitana", # Peñalolen
-        "https://www.portalinmobiliario.com/arriendo/departamento/la-florida-metropolitana",# La Florida
-        "https://www.portalinmobiliario.com/arriendo/departamento/las-condes-metropolitana",# Las Condes
-        "https://www.portalinmobiliario.com/arriendo/departamento/la-reina-metropolitana",  # La Reina
-        "https://www.portalinmobiliario.com/arriendo/departamento/macul-metropolitana",     # Macul
-        "https://www.portalinmobiliario.com/arriendo/departamento/nunoa-metropolitana"      # Ñuñoa
-        ]
+    url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
+    comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
+    metrop = '-metropolitana'
+    start_urls = []
+    for comuna in comunas : start_urls.append(url + comuna + metrop)
     # Dominios permitidos
     allowed_domains = ['portalinmobiliario.com']
     # Tiempo de espera randomizado para cada requerimiento
     RANDOMIZE_DOWNLOAD_DELAY  = True
-    # Regla para extraer los datos de la URL Senilla
+    # Regla para extraer los datos de la URLs
     rules = (
         # Horizontal
         Rule(LinkExtractor(
@@ -77,9 +73,12 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_value('url', response.request.url)
         yield item.load_item()
 # Deploy
+path = 'scraping/output/'
+now = datetime.now()
+dt_string = now.strftime("%d-%m-%Y.%H:%M:%S")
 process = CrawlerProcess({
         'FEED_FORMAT' : 'json',
-        'FEED_URI' : 'scraping/output/portalinmobiliario.json'
+        'FEED_URI' : path + dt_string + '_portalinmobiliario.json'
     }
 )
 process.crawl(PortainmobiliarioSpider)
