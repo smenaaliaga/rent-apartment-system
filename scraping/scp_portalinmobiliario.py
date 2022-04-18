@@ -13,7 +13,8 @@ class Depto(Item) :
     superficie_util = Field()
     dormitorios = Field()
     baños = Field()
-    estacionamiento = Field()
+    estacionamientos = Field()
+    bodegas = Field()
     gastos_comunes = Field()
     precio = Field()
     url = Field()
@@ -67,7 +68,8 @@ class PortainmobiliarioSpider(CrawlSpider) :
         MapCompose(lambda i: i.replace(' m²', '')))
         item.add_xpath('dormitorios', '//tr[./th[contains(text(),"Dormitorios")]]//span/text()')
         item.add_xpath('baños', '//tr[./th[contains(text(),"Baños")]]//span/text()')
-        item.add_xpath('estacionamiento', '//tr[./th[contains(text(),"Estacionamientos")]]//span/text()')
+        item.add_xpath('estacionamientos', '//tr[./th[contains(text(),"Estacionamientos")]]//span/text()')
+        item.add_xpath('bodegas', '//tr[./th[contains(text(),"Bodegas")]]//span/text()')
         item.add_xpath('gastos_comunes', '//tr[./th[contains(text(),"Gastos comunes")]]//span/text()',
         MapCompose(lambda i: i.replace('.', '').replace(' CLP', '')))
         item.add_xpath('precio', '//span[@class="andes-money-amount__fraction"]/text()',
