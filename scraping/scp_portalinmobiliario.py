@@ -8,6 +8,7 @@ from datetime import datetime
 
 class Depto(Item) :
     titulo = Field()
+    comuna = Field()
     ubicacion = Field()
     descripcion = Field()
     superficie_total = Field()
@@ -17,6 +18,7 @@ class Depto(Item) :
     estacionamientos = Field()
     bodegas = Field()
     gastos_comunes = Field()
+    currency_symbol = Field()
     precio = Field()
     url = Field()
 
@@ -25,7 +27,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
     name = "PortainmobiliarioSpider"
     # Configuraciones
     custom_settings = {
-        'USER_AGENT': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/71.0.3578.80 Chrome/71.0.3578.80 Safari/537.36',
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/80.0.3987.149 Safari/537.36',
         # 'CLOSESPIDER_PAGECOUNT' : 2001,
         'FEED_EXPORT_ENCODING' : 'utf-8',
         # Tiempo de espera randomizado para cada requerimiento
@@ -56,6 +58,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
     def parse_depto(self, response) :
         item = ItemLoader(Depto(), response)
         item.add_xpath('titulo', '//h1[@class="ui-pdp-title"]/text()')
+        item.add_xpath('comuna', '//ol/li[5]/a/text()')
         item.add_xpath('ubicacion', '//div[@class="ui-vip-location"]//p/text()')
         item.add_xpath('descripcion', '//p[@class="ui-pdp-description__content"]/text()')
         item.add_xpath('superficie_total', '//tr[./th[contains(text(),"Superficie total")]]//span/text()',
@@ -68,17 +71,18 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_xpath('bodegas', '//tr[./th[contains(text(),"Bodegas")]]//span/text()')
         item.add_xpath('gastos_comunes', '//tr[./th[contains(text(),"Gastos comunes")]]//span/text()',
         MapCompose(lambda i: i.replace('.', '').replace(' CLP', '')))
-        item.add_xpath('precio', '//span[@class="andes-money-amount__fraction"]/text()',
+        item.add_xpath('currency_symbol', '//span[@itemprop="priceCurrency"]/text()'),
+        item.add_xpath('precio', '(//span[@class="andes-money-amount__fraction"])[last()]/text()',
         MapCompose(lambda i: i.replace('.', '').replace(' CLP', '')))
         item.add_value('url', response.request.url)
         yield item.load_item()
 # Deploy
 path = 'scraping/output/'
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y.%H.%M")
+dt_string = now.strftime("%d-%m-%Yh%H.%M")
 process = CrawlerProcess(settings={
     "FEEDS": {
-        path + 'portainmobiliario_' + dt_string + '.json' : {"format": "json"},
+        path + 'portainmobiliario_' + dt_string + '.csv' : {"format": "csv"},
     },
 })
 process.crawl(PortainmobiliarioSpider)
