@@ -27,7 +27,9 @@ class PortainmobiliarioSpider(CrawlSpider) :
     custom_settings = {
         'USER_AGENT': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/71.0.3578.80 Chrome/71.0.3578.80 Safari/537.36',
         # 'CLOSESPIDER_PAGECOUNT' : 2001,
-        'FEED_EXPORT_ENCODING' : 'utf-8'
+        'FEED_EXPORT_ENCODING' : 'utf-8',
+        # Tiempo de espera randomizado para cada requerimiento
+        'RANDOMIZE_DOWNLOAD_DELAY' : True
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
@@ -37,8 +39,6 @@ class PortainmobiliarioSpider(CrawlSpider) :
     for comuna in comunas : start_urls.append(url + comuna + metrop)
     # Dominios permitidos
     allowed_domains = ['portalinmobiliario.com']
-    # Tiempo de espera randomizado para cada requerimiento
-    RANDOMIZE_DOWNLOAD_DELAY  = True
     # Regla para extraer los datos de la URLs
     rules = (
         # Horizontal
@@ -75,11 +75,11 @@ class PortainmobiliarioSpider(CrawlSpider) :
 # Deploy
 path = 'scraping/output/'
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y.%H:%M:%S")
-process = CrawlerProcess({
-        'FEED_FORMAT' : 'json',
-        'FEED_URI' : path + dt_string + '_portalinmobiliario.json'
-    }
-)
+dt_string = now.strftime("%d-%m-%Y.%H.%M")
+process = CrawlerProcess(settings={
+    "FEEDS": {
+        path + 'portainmobiliario_' + dt_string + '.json' : {"format": "json"},
+    },
+})
 process.crawl(PortainmobiliarioSpider)
 process.start()
