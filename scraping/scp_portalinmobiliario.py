@@ -5,6 +5,7 @@ from scrapy.loader import ItemLoader
 from scrapy.linkextractors import LinkExtractor
 from scrapy.crawler import CrawlerProcess
 from datetime import datetime
+import re
 
 class Depto(Item) :
     titulo = Field()
@@ -62,6 +63,11 @@ class PortainmobiliarioSpider(CrawlSpider) :
         newText = text.split(" - ")
         newText = newText[1].replace(' metros', '')
         return newText
+    def subLowerCase(self, text) :
+        newText = text.lower()
+        newText = re.sub('[^a-zA-Z0-9 \.]', '', newText)
+        newText = newText.replace('.', '')
+        return newText
     def deleteM2(self, text) :
         newText = text.replace(' m²', '')
         return newText
@@ -79,7 +85,8 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_xpath('distancia_estacion', 
         '//div[./span[contains(text(),"Estaciones")]]/div[@class="ui-vip-poi__item"][1]/div[@class="ui-vip-poi__item-subtitle"]/span/text()',
         MapCompose(self.splitDistance))
-        item.add_xpath('descripcion', '//p[@class="ui-pdp-description__content"]/text()')
+        item.add_xpath('descripcion', '//p[@class="ui-pdp-description__content"]/text()',
+        MapCompose(self.subLowerCase))
         item.add_xpath('superficie_total', '//tr[./th[contains(text(),"Superficie total")]]//span/text()',
         MapCompose(self.deleteM2))
         item.add_xpath('superficie_util', '//tr[./th[contains(text(),"Superficie útil")]]//span/text()',
