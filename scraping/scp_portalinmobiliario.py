@@ -10,6 +10,8 @@ class Depto(Item) :
     titulo = Field()
     comuna = Field()
     ubicacion = Field()
+    estacion_cercana = Field()
+    distancia_estacion = Field()
     descripcion = Field()
     superficie_total = Field()
     superficie_util = Field()
@@ -35,7 +37,8 @@ class PortainmobiliarioSpider(CrawlSpider) :
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
-    comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
+    #comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
+    comunas = ['la-florida']
     metrop = '-metropolitana'
     start_urls = []
     for comuna in comunas : start_urls.append(url + comuna + metrop)
@@ -54,26 +57,42 @@ class PortainmobiliarioSpider(CrawlSpider) :
                 restrict_xpaths = r'//section[@class="ui-search-results"]'
             ), follow = True, callback = 'parse_depto'),
     )
+    # Preprocesamiento de datos
+    def splitDistance(self, text) :
+        newText = text.split(" - ")
+        newText = newText[1].replace(' metros', '')
+        return newText
+    def deleteM2(self, text) :
+        newText = text.replace(' m²', '')
+        return newText
+    def deleteCLP(self, text) :
+        newText = text.replace(' CLP', '')
+        return newText
     # Parsear dato departamentos
     def parse_depto(self, response) :
         item = ItemLoader(Depto(), response)
         item.add_xpath('titulo', '//h1[@class="ui-pdp-title"]/text()')
         item.add_xpath('comuna', '//ol/li[5]/a/text()')
         item.add_xpath('ubicacion', '//div[@class="ui-vip-location"]//p/text()')
+        item.add_xpath('estacion_cercana', 
+        '//div[./span[contains(text(),"Estaciones")]]/div[@class="ui-vip-poi__item"][1]/div[@class="ui-vip-poi__item-title"]/span/text()')
+        item.add_xpath('distancia_estacion', 
+        '//div[./span[contains(text(),"Estaciones")]]/div[@class="ui-vip-poi__item"][1]/div[@class="ui-vip-poi__item-subtitle"]/span/text()',
+        MapCompose(self.splitDistance))
         item.add_xpath('descripcion', '//p[@class="ui-pdp-description__content"]/text()')
         item.add_xpath('superficie_total', '//tr[./th[contains(text(),"Superficie total")]]//span/text()',
-        MapCompose(lambda i: i.replace(' m²', '')))
+        MapCompose(self.deleteM2))
         item.add_xpath('superficie_util', '//tr[./th[contains(text(),"Superficie útil")]]//span/text()',
-        MapCompose(lambda i: i.replace(' m²', '')))
+        MapCompose(self.deleteM2))
         item.add_xpath('dormitorios', '//tr[./th[contains(text(),"Dormitorios")]]//span/text()')
         item.add_xpath('baños', '//tr[./th[contains(text(),"Baños")]]//span/text()')
         item.add_xpath('estacionamientos', '//tr[./th[contains(text(),"Estacionamientos")]]//span/text()')
         item.add_xpath('bodegas', '//tr[./th[contains(text(),"Bodegas")]]//span/text()')
         item.add_xpath('gastos_comunes', '//tr[./th[contains(text(),"Gastos comunes")]]//span/text()',
-        MapCompose(lambda i: i.replace('.', '').replace(' CLP', '')))
+        MapCompose(self.deleteCLP))
         item.add_xpath('currency_symbol', '//span[@itemprop="priceCurrency"]/text()'),
         item.add_xpath('precio', '(//span[@class="andes-money-amount__fraction"])[last()]/text()',
-        MapCompose(lambda i: i.replace('.', '').replace(' CLP', '')))
+        MapCompose(self.deleteCLP))
         item.add_value('url', response.request.url)
         yield item.load_item()
 # Deploy
