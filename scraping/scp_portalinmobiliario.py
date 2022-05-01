@@ -22,6 +22,7 @@ class Depto(Item) :
     estacionamientos = Field()
     bodegas = Field()
     gastos_comunes = Field()
+    search_gc = Field()
     currency_symbol = Field()
     precio = Field()
     url = Field()
@@ -31,16 +32,20 @@ class PortainmobiliarioSpider(CrawlSpider) :
     name = "PortainmobiliarioSpider"
     # Configuraciones
     custom_settings = {
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/80.0.3987.149 Safari/537.36',
-        # 'CLOSESPIDER_PAGECOUNT' : 2001,
+        # Identificación del sistema
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/44.0.2403.155 Safari/537.36',
+        # Encoding
         'FEED_EXPORT_ENCODING' : 'utf-8',
         # Tiempo de espera randomizado para cada requerimiento
-        'RANDOMIZE_DOWNLOAD_DELAY' : True
+        'RANDOMIZE_DOWNLOAD_DELAY' : True,
+        # Orden de los campos
+        'FEED_EXPORT_FIELDS' : ['titulo','comuna','estacion_cercana','distancia_estacion','dormitorios','baños',
+        'estacionamientos','bodegas','superficie_total','superficie_util','currency_symbol','precio','gastos_comunes',
+        'search_gc','descripcion','ubicacion','url']
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
-    #comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
-    comunas = ['la-florida']
+    comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
     metrop = '-metropolitana'
     start_urls = []
     for comuna in comunas : start_urls.append(url + comuna + metrop)
@@ -72,13 +77,34 @@ class PortainmobiliarioSpider(CrawlSpider) :
         )
         newText = re.sub('[^a-zA-Z0-9 \.]', '', newText)
         newText = newText.replace('.', '')
+        newText = re.sub(' +', ' ', newText)
         return newText
     def deleteM2(self, text) :
         newText = text.replace(' m²', '')
         return newText
     def deleteCLP(self, text) :
-        newText = text.replace(' CLP', '')
+        newText = text.replace('.', '')
+        newText = newText.replace(' CLP', '')
         return newText
+    # Buscar en descripcion el precio del gasto comun
+    def searchGastoComun(self, item) :
+        precio = int(item.get_collected_values('precio')[0])
+        desc_list = item.get_collected_values('descripcion')
+        desc = ' '.join([str(elem) for elem in desc_list])
+        list_gc = ['gastos comunes', 'gastos  comunes', 'gasto comun']
+        bool = False
+        for gc in list_gc :
+            if gc in desc :
+                i = desc.find(gc)
+                text_aux = desc[(i-25 if i-25>0 else 0):(i+len(gc)+25 if i+len(gc)+25<=len(desc) else len(desc))]
+                num_gc = [int(s) for s in re.findall(r'\b\d+\b', text_aux)]
+                if len(num_gc) :
+                    res = [i for i in num_gc if 10000 < i < precio]
+                    item.add_value('gastos_comunes', [str(res[0])])
+                    item.add_value('search_gc', ['1'])
+                    bool = True
+                    break
+        if bool == False : item.add_value('search_gc', ['0']) 
     # Parsear dato departamentos
     def parse_depto(self, response) :
         item = ItemLoader(Depto(), response)
@@ -106,6 +132,12 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_xpath('precio', '(//span[@class="andes-money-amount__fraction"])[last()]/text()',
         MapCompose(self.deleteCLP))
         item.add_value('url', response.request.url)
+        # Revisión gastos comunes
+        gastos_comunes = item.get_collected_values('gastos_comunes')
+        if len(gastos_comunes) == 0 :
+            self.searchGastoComun(item)
+        else :
+            item.add_value('search_gc', ['0'])
         yield item.load_item()
 # Deploy
 path = 'scraping/output/'
