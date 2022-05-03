@@ -1,12 +1,8 @@
-# Results export
-*.json
-*.csv
-*.xls
-*.xlsx
-*.sql
+# output scraping
+scraping/output/
 
 # Testing
-testing.py
+test/
 
 # vscode
 .vscode/
