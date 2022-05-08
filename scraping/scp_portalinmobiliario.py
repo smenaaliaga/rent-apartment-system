@@ -11,7 +11,7 @@ import re
 class Depto(Item) :
     titulo = Field()
     comuna = Field()
-    ubicacion = Field()
+    direccion = Field()
     estacion_cercana = Field()
     distancia_estacion = Field()
     descripcion = Field()
@@ -41,7 +41,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
         # Orden de los campos
         'FEED_EXPORT_FIELDS' : ['titulo','comuna','estacion_cercana','distancia_estacion','dormitorios','baños',
         'estacionamientos','bodegas','superficie_total','superficie_util','currency_symbol','precio','gastos_comunes',
-        'search_gc','descripcion','ubicacion','url']
+        'search_gc','descripcion','direccion','url']
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
@@ -110,7 +110,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item = ItemLoader(Depto(), response)
         item.add_xpath('titulo', '//h1[@class="ui-pdp-title"]/text()')
         item.add_xpath('comuna', '//ol/li[5]/a/text()')
-        item.add_xpath('ubicacion', '//div[@class="ui-vip-location"]//p/text()')
+        item.add_xpath('direccion', '//div[@class="ui-vip-location"]//p/text()')
         item.add_xpath('estacion_cercana', 
         '//div[./span[contains(text(),"Estaciones")]]/div[@class="ui-vip-poi__item"][1]/div[@class="ui-vip-poi__item-title"]/span/text()')
         item.add_xpath('distancia_estacion', 
