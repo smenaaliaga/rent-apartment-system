@@ -4,6 +4,9 @@ scraping/output/
 # Testing
 test/
 
+# Keys
+keys/
+
 # vscode
 .vscode/
 
