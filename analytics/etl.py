@@ -2,6 +2,9 @@
 ## Extract Transform Load ##
 ############################
 import pandas as pd
+import sys
+sys.path.append('utils/')
+from geocoding import geocoding
 #### Carga el archivo
 df = pd.read_csv('analytics/data/departamentos.csv')
 print(df)
@@ -30,6 +33,8 @@ df['bodegas'] = df['bodegas'].fillna(0)
 print('==> Total de registros con NaN x columna :')
 print(df.isnull().sum())
 df = df.dropna()
+# Geocoding
+df = geocoding(df)
 # Resutado final
 print('==> Total de registros :', df.shape)
 #### Guardar el archivo
