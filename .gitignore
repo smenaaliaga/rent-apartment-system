@@ -1,6 +1,9 @@
 # output scraping
 scraping/output/
 
+# data shp
+analytics/data/shp/
+
 # Testing
 test/
 
