@@ -12,6 +12,8 @@ class Depto(Item) :
     titulo = Field()
     comuna = Field()
     direccion = Field()
+    lat = Field()
+    long = Field()
     estacion_cercana = Field()
     distancia_estacion = Field()
     descripcion = Field()
@@ -41,11 +43,17 @@ class PortainmobiliarioSpider(CrawlSpider) :
         # Orden de los campos
         'FEED_EXPORT_FIELDS' : ['titulo','comuna','estacion_cercana','distancia_estacion','dormitorios','baños',
         'estacionamientos','bodegas','superficie_total','superficie_util','currency_symbol','precio','gastos_comunes',
-        'search_gc','descripcion','direccion','url']
+        'search_gc','descripcion','direccion','lat','long','url']
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
-    comunas = ['santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul']
+    comunas_2 = [
+        'santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul'
+        'vitacura', 'cerro-navia', 'conchali', 'el-bosque', 'estacion-central', 'la-granja', 'la-pintana',
+        'lo-prado', 'maipu', 'pedro-aguirre-cerda', 'pudahuel', 'quilicura', 'quinta-normal', 'recoleta',
+        'renca', 'san-joaquin', 'san-bernardo', 'san-miguel', 'independencia', 'la-cisterna', 'huechuraba', 'cerrillos'
+    ]
+    comunas = ['cerrillos']
     metrop = '-metropolitana'
     start_urls = []
     for comuna in comunas : start_urls.append(url + comuna + metrop)
@@ -111,6 +119,16 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_xpath('titulo', '//h1[@class="ui-pdp-title"]/text()')
         item.add_xpath('comuna', '//ol/li[5]/a/text()')
         item.add_xpath('direccion', '//div[@class="ui-vip-location"]//p/text()')
+         # Split Lat Long
+        def get_latlong(text) : 
+            array = text.split('center=')
+            array = array[1].split('&zoom')
+            array = array[0].split('%2C')
+            return array
+        url_latlong = response.xpath('//img[@class="ui-pdp-image"]/@srcset').get()
+        array_latlong = get_latlong(url_latlong)
+        item.add_value('lat', array_latlong[0])
+        item.add_value('long', array_latlong[1])
         item.add_xpath('estacion_cercana', 
         '//div[./span[contains(text(),"Estaciones")]]/div[@class="ui-vip-poi__item"][1]/div[@class="ui-vip-poi__item-title"]/span/text()')
         item.add_xpath('distancia_estacion', 
