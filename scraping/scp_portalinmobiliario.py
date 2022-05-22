@@ -1,12 +1,15 @@
 from scrapy.item import Field, Item
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.loader.processors import MapCompose
 from scrapy.loader import ItemLoader
 from scrapy.linkextractors import LinkExtractor
 from scrapy.crawler import CrawlerProcess
+from itemloaders.processors import MapCompose
 from datetime import datetime
 from unicodedata import normalize
 import re
+import sys
+
+comuna = sys.argv[1]
 
 class Depto(Item) :
     titulo = Field()
@@ -33,6 +36,8 @@ class PortainmobiliarioSpider(CrawlSpider) :
     # Nombre Spider
     name = "PortainmobiliarioSpider"
     # Configuraciones
+    now = datetime.now()
+    dt_day = now.strftime("%d-%m-%Y")
     custom_settings = {
         # Identificación del sistema
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/44.0.2403.155 Safari/537.36',
@@ -40,6 +45,10 @@ class PortainmobiliarioSpider(CrawlSpider) :
         'FEED_EXPORT_ENCODING' : 'utf-8',
         # Tiempo de espera randomizado para cada requerimiento
         'RANDOMIZE_DOWNLOAD_DELAY' : True,
+        # log
+        'LOG_FILE' : 'scraping/log/portalinmobiliario_' + dt_day +'.txt',
+        'LOG_LEVEL' : 'INFO',
+        'LOG_STDOUT' : True,
         # Orden de los campos
         'FEED_EXPORT_FIELDS' : ['titulo','comuna','estacion_cercana','distancia_estacion','dormitorios','baños',
         'estacionamientos','bodegas','superficie_total','superficie_util','currency_symbol','precio','gastos_comunes',
@@ -47,16 +56,9 @@ class PortainmobiliarioSpider(CrawlSpider) :
     }
     # URls Semillas
     url = 'https://www.portalinmobiliario.com/arriendo/departamento/'
-    comunas_2 = [
-        'santiago', 'las-condes', 'la-reina', 'penalolen', 'la-florida', 'providencia', 'nunoa', 'macul'
-        'vitacura', 'cerro-navia', 'conchali', 'el-bosque', 'estacion-central', 'la-granja', 'la-pintana',
-        'lo-prado', 'maipu', 'pedro-aguirre-cerda', 'pudahuel', 'quilicura', 'quinta-normal', 'recoleta',
-        'renca', 'san-joaquin', 'san-bernardo', 'san-miguel', 'independencia', 'la-cisterna', 'huechuraba', 'cerrillos'
-    ]
-    comunas = ['cerrillos']
     metrop = '-metropolitana'
     start_urls = []
-    for comuna in comunas : start_urls.append(url + comuna + metrop)
+    start_urls.append(url + comuna + metrop)
     # Dominios permitidos
     allowed_domains = ['portalinmobiliario.com']
     # Regla para extraer los datos de la URLs
@@ -108,10 +110,11 @@ class PortainmobiliarioSpider(CrawlSpider) :
                 num_gc = [int(s) for s in re.findall(r'\b\d+\b', text_aux)]
                 if len(num_gc) :
                     res = [i for i in num_gc if 10000 < i < precio]
-                    item.add_value('gastos_comunes', [str(res[0])])
-                    item.add_value('search_gc', ['1'])
-                    bool = True
-                    break
+                    if len(res) :
+                        item.add_value('gastos_comunes', [str(res[0])])
+                        item.add_value('search_gc', ['1'])
+                        bool = True
+                        break
         if bool == False : item.add_value('search_gc', ['0']) 
     # Parsear dato departamentos
     def parse_depto(self, response) :
@@ -119,7 +122,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
         item.add_xpath('titulo', '//h1[@class="ui-pdp-title"]/text()')
         item.add_xpath('comuna', '//ol/li[5]/a/text()')
         item.add_xpath('direccion', '//div[@class="ui-vip-location"]//p/text()')
-         # Split Lat Long
+        # Split Lat Long
         def get_latlong(text) : 
             array = text.split('center=')
             array = array[1].split('&zoom')
@@ -163,7 +166,7 @@ now = datetime.now()
 dt_string = now.strftime("%d-%m-%Yh%H.%M")
 process = CrawlerProcess(settings={
     "FEEDS": {
-        path + 'portainmobiliario_' + dt_string + '.csv' : {"format": "csv"},
+        path + 'portainmobiliario_' + comuna + '_' + dt_string + '.csv' : {"format": "csv"},
     },
 })
 process.crawl(PortainmobiliarioSpider)
