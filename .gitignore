@@ -1,6 +1,9 @@
 # output scraping
 scraping/output/
 
+# logs
+scraping/log/
+
 # data shp
 analytics/data/shp/
 
