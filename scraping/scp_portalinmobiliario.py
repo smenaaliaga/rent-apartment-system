@@ -82,6 +82,9 @@ class PortainmobiliarioSpider(CrawlSpider) :
                 allow = r'/MLC-',
                 restrict_xpaths = r'//section[@class="ui-search-results"]'
             ), follow = True, callback = 'parse_depto'),
+        Rule(LinkExtractor(
+            deny_domains=["#redirectedFromVip"]
+            )),
     )
     # Preprocesamiento de datos
     def splitDistance(self, text) :
