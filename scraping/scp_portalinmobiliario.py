@@ -39,7 +39,12 @@ class PortainmobiliarioSpider(CrawlSpider) :
     now = datetime.now()
     dt_day = now.strftime("%d-%m-%Y")
     custom_settings = {
-        # Identificación del sistema
+        # Identificación de agente
+        'FAKEUSERAGENT_PROVIDERS' : [
+            'scrapy_fake_useragent.providers.FakeUserAgentProvider', 
+            'scrapy_fake_useragent.providers.FakerProvider',
+            'scrapy_fake_useragent.providers.FixedUserAgentProvider',
+        ],
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/44.0.2403.155 Safari/537.36',
         # Encoding
         'FEED_EXPORT_ENCODING' : 'utf-8',
