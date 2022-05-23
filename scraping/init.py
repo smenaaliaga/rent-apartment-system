@@ -1,4 +1,4 @@
-import os 
+import os
 from datetime import datetime
 import time
 import random
@@ -14,7 +14,7 @@ comunas = [
     'renca', 'san-joaquin', 'san-bernardo', 'san-miguel', 'independencia', 'la-cisterna', 'huechuraba', 'cerrillos'
 ]
 
-f = open('scraping/log/portalinmobiliario_' + dt_day +'.txt', "a+")
+f = open('scraping/log/portalinmobiliario_' + dt_day +'.txt', "w")
 f.write("Init scraping " + dt_time + '\n')
 f.close()
 
@@ -22,6 +22,6 @@ for comuna in comunas :
     f = open('scraping/log/portalinmobiliario_' + dt_day +'.txt', "a+")
     f.write("===> Comuna scraping : " + comuna + '\n')
     f.close()
-    os.system("python3 scraping/scp_portalinmobiliario.py " + comuna) 
+    os.system("python3 scraping/scp_portalinmobiliario.py " + comuna)
     sleep = random.randint(60, 180)
     time.sleep(sleep)

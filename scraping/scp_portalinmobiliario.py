@@ -6,6 +6,7 @@ from scrapy.crawler import CrawlerProcess
 from itemloaders.processors import MapCompose
 from datetime import datetime
 from unicodedata import normalize
+import pandas as pd
 import re
 import sys
 
@@ -35,6 +36,9 @@ class Depto(Item) :
 class PortainmobiliarioSpider(CrawlSpider) :
     # Nombre Spider
     name = "PortainmobiliarioSpider"
+    # Selección de agente aleatorio
+    df = pd.read_table("scraping/agents_scrapy.txt")
+    agent = df.sample().values[0]
     # Configuraciones
     now = datetime.now()
     dt_day = now.strftime("%d-%m-%Y")
@@ -45,7 +49,7 @@ class PortainmobiliarioSpider(CrawlSpider) :
             'scrapy_fake_useragent.providers.FakerProvider',
             'scrapy_fake_useragent.providers.FixedUserAgentProvider',
         ],
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/44.0.2403.155 Safari/537.36',
+        'USER_AGENT': agent,
         # Encoding
         'FEED_EXPORT_ENCODING' : 'utf-8',
         # Tiempo de espera randomizado para cada requerimiento
